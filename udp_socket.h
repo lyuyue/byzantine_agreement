@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include "message.h"
 #include "constant.h"
 
-typedef struct node {
+typedef struct {
     struct sockaddr_in sockaddr;
     struct node *next;
-};
+} node;
 
 int socket_init(char *hostname, int port, struct sockaddr_in *serveraddr) {
     struct hostent *server;
@@ -40,9 +41,8 @@ int socket_connect() {
     return sockfd;
 }
 
-int socket_send(int sockfd, struct sockaddr_in *serveraddr, char *buf, int msg_flag) {
-    int serverlen = sizeof(serveraddr);
-    int buf_size = strlen(buf);
+int socket_send(int sockfd, struct sockaddr_in *serveraddr, char *buf, int buf_size) {
+    int serverlen = sizeof(struct sockaddr_in);
 
     int bytes_sent = sendto(sockfd, buf, buf_size, 0, serveraddr, serverlen);
     if (bytes_sent < 0) {
@@ -53,23 +53,70 @@ int socket_send(int sockfd, struct sockaddr_in *serveraddr, char *buf, int msg_f
     return 0;
 }
 
-int socket_recv(int sockfd, struct sockaddr_in *serveraddr, char *data) {
-    int serverlen = sizeof(serveraddr);
+int socket_recv(int sockfd, struct sockaddr_in *serveraddr, char *recv_buf) {
+    int serverlen = sizeof(struct sockaddr_in);
+    int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) serveraddr, &serverlen);
 
+    if (bytes_recv < 0)
     return 0;
 }
 
-int reliable_send(int sockfd, struct sockaddr_in *serveraddr, char *send_buf, char *recv_buf, int msg_flag) {
+int reliable_send(int sockfd, struct sockaddr_in *serveraddr, char *send_buf, int send_buf_size char *recv_buf) {
     int buf_size = strlen(send_buf);
     int bytes_sent = 0;
+    int bytes_recv = 0;
+    int tle_count = 0;
 
     // send a packet
+    while (tle_count < 3) {
+        bytes_sent = socket_send(sockfd, serveraddr, send_buf, send_buf_size);
+        if (byte_sent == -1) {
+            perror("ERROR ByzantineMessage send");
+        }
+
+        struct timeval tv;
+        tv.tv_sec = TIMEOUT_SEC;
+
+        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+            perror("ERROR set recv_timeout");
+        }
+
+        // wait for ack
+        bzero((char *) recv_buf, BUF_SIZE);
+        bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) serveraddr, &serverlen);
+        if (bytes_recv < 0) {
+            tle_count ++;
+            continue;
+        }
+
+        struct Ack *ack_msg = (struct Ack *) recv_buf;
+
+    }
+}
+
+int ack_send(int sockfd, struct sockaddr_in *serveraddr, int round_n) {
+    // typedef struct {
+    //     uint32_t type;  // must equal to 2
+    //     uint32_t size;  // size of message in bytes
+    //     uint32_t round_n; // round number
+    // } Ack;
+
+    struct Ack *msg = (struct Ack *) malloc(sizeof(struct Ack));
+    msg->type = 2;
+    msg->size = sizeof(struct Ack);
+    msg->round_n = round_n;
+
+    int serverlen = sizeof(struct sockaddr_in)
+
+    int bytes_sent = 0;
     do {
-        bytes_sent = socket_send(sockfd, serveraddr, send_buf, msg_flag);
-    } while (bytes_sent == -1);
+       bytes_sent = sendto(sockfd, (char *) msg, data[1], 0, serveraddr, &serverlen);
+    } while (bytes_sent > 0);
 
-    // wait for ack
-    bzero((char *) recv_buf, BUF_SIZE);
-    int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) serveraddr, &serverlen)
+    if (bytes_sent < 0) {
+        perror("ERROR Ack send");
+        return -1;
+    }
 
+    return 0;
 }

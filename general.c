@@ -8,11 +8,14 @@
 struct node *hostlist = NULL;
 
 char *hostfile;
-char *order;
+char *order_txt;
 int faulty = 0;
 int port = 0;
 int commander_id = LOCALHOST;
 int sockfd = -1;
+int round_n = 0;
+int order = -1;
+int value_set[2] = {0, 0};
 
 int stoi(char *data) {
     int result = 0;
@@ -98,7 +101,12 @@ int main(int argc, char *argv[]) {
 
         if (strcmp(argv[arg_itr], "-o") == 0) {
             arg_itr ++;
-            order = argv[arg_itr];
+            order_txt = argv[arg_itr];
+            if (strcmp(order_txt, "attack") == 0) {
+                order = 1;
+            } else {
+                order = 0;
+            }
             continue;
         }
     }
@@ -112,17 +120,41 @@ int main(int argc, char *argv[]) {
     // Commander
     // Select a value v
     // Send v_0 to every lietenant
+
+    // typedef struct {
+    //     uint32_t type;      // must equal to 1
+    //     uint32_t size;      // size of message in bytes
+    //     uint32_t round;     // round number
+    //     uint32_t order;     // the order (retreat = 0 and attack = 1)
+    //     uint32_t ids[];     // ids of the senders of this message
+    // } ByzantineMesage;
+
     if (commander_id == LOCALHOST) {
-       
+        struct ByzantineMesage *msg = (struct ByzantineMesage *) malloc(sizeof(struct ByzantineMesage) + sizeof(uint32_t));
+        msg->type = 1;
+        msg->size = sizeof(struct ByzantineMesage) + sizeof(uint32_t);
+        msg->round = 0;
+        msg->order = order;
+        uint32_t *ids = (uint32_t) ((struct ByzantineMesage *) msg + 1);
+        *ids = commander_id;
+
+        char ack_buf[BUF_SIZE];
 
         struct node *list_itr = hostlist;
-        while (node != NULL) {
-
+        while (list_itr != NULL) {
+            reliable_send(sockfd, &hostlist->sockaddr, send_buf, ack_buf);
+            list_itr = list_itr->next;
         }
         return 0; 
     }
 
     // Lieutenant
+
+    while (round_n < faulty + 1) {
+
+    }
+
+    int result = choice();
 
 
     return 0;
