@@ -6,11 +6,6 @@
 #include "message.h"
 #include "constant.h"
 
-typedef struct {
-    struct sockaddr_in sockaddr;
-    struct node *next;
-} node;
-
 int socket_init(char *hostname, int port, struct sockaddr_in *serveraddr) {
     struct hostent *server;
     server = gethostbyname(hostname);
