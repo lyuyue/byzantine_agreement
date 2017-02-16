@@ -27,12 +27,18 @@ int socket_init(char *hostname, int port, struct sockaddr_in *serveraddr) {
     return 0;
 }
 
-int socket_connect() {
+int socket_connect(struct sockaddr_in *self_sockaddr) {
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("ERROR opening socket");
         return -1;
     }
+
+    if (bind(sockfd, (struct sockaddr *) self_sockaddr, sizeof(struct sockaddr_in)) < 0) {
+        perror("ERROR bind socket");
+        return -1;
+    }
+
     return sockfd;
 }
 

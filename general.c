@@ -20,6 +20,7 @@ int round_n = 0;
 int order = -1;
 int value_set[2] = {0, 0};
 int multicast_list[MAX_HOSTS][MAX_HOSTS];
+pthread_t multicast_tid[MAX_HOSTS][MAX_HOSTS];
 uint32_t multicast_data[MAX_HOSTS];
 
 int stoi(char *data) {
@@ -81,6 +82,7 @@ int main(int argc, char *argv[]) {
     bzeros((char *) &hostlist[0], sizeof(struct sockaddr_in) * MAX_HOSTS);
     bzeros((char *) &multicast_list[0][0], sizeof(int) * MAX_HOSTS * MAX_HOSTS);
     bzeros((char *) &multicast_data[0], sizeof(uint32_t) * MAX_HOSTS));
+    bzeros((char *) &multicast_tid[0][0], sizeof(pthread_t) * MAX_HOSTS * MAX_HOSTS);
 
     // parse arguments
 
@@ -128,7 +130,7 @@ int main(int argc, char *argv[]) {
     self_sockaddr.sin_port = htons(port);
 
     int host_count = get_hostlist();
-    sockfd = socket_connect();
+    sockfd = socket_connect(&self_sockaddr);
     if (sockfd == -1) {
         return -1;
     }
@@ -178,53 +180,71 @@ int main(int argc, char *argv[]) {
     uint32_t order_recv = msg->order;
     value_set[order_recv] = 1;
 
+    int tle_count = 0;
+
     while (round_n < faulty + 1) {
         if (round_n > 0) {
             for (int i = 0; i < hostlist_len; i++) {
-                if (multicast_list)
+                if (multicast_list[round_n - 1][i] == 0) continue;
+                // TODO: pthread send ByzantineMessage
+
             }
         }
 
-        while () {
-            for (int i = 0; i < hostlist_len; i++) {
-                if (i == self_id) continue;
-                bzero(recv_buf, BUF_SIZE);
-                int serverlen = sizeof(struct sockaddr_in);
-                int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) &hostlist[i], &serverlen);
-                uint32_t *msg_type = (uint32_t *) recv_buf;
-                if (*msg_type == 1) {
-                    // TODO: send ACK;
+        for (int i = 0; i < hostlist_len; i++) {
+            if (i == self_id) continue;
+            bzero(recv_buf, BUF_SIZE);
+            int serverlen = sizeof(struct sockaddr_in);
+            int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) &hostlist[i], &serverlen);
+            uint32_t *msg_type = (uint32_t *) recv_buf;
+            if (*msg_type == 1) {
+                // TODO: send ACK;
 
-                    // ByzantineMessage
-                    struct ByzantineMessage *cur_msg = (struct ByzantineMessage *) recv_buf;
-                    // ignore out-of-data msg
-                    if (cur_msg->round_n < round_n) continue;
-                    // ignore existing order
-                    if (value_set[cur_msg->order] == 1) continue;
+                // ByzantineMessage
+                struct ByzantineMessage *cur_msg = (struct ByzantineMessage *) recv_buf;
+                // ignore out-of-data msg
+                if (cur_msg->round_n < round_n) continue;
+                // ignore existing order
+                if (value_set[cur_msg->order] == 1) continue;
 
-                    value_set[cur_msg->order] = 1;
-                    multicast_data[round_n + 1] = cur_msg->order;
-                    uint32_t msg_size = cur_msg->size - (uint32_t) sizeof(struct ByzantineMessage);
-                    int ids_count = int (msg_size / sizeof(uint32_t));
+                value_set[cur_msg->order] = 1;
+                multicast_data[round_n + 1] = cur_msg->order;
+                uint32_t msg_size = cur_msg->size - (uint32_t) sizeof(struct ByzantineMessage);
+                int ids_count = int (msg_size / sizeof(uint32_t));
 
-                    cur_msg += 1;
-                    uint32_t *itr = (uint32_t *) cur_msg;
-                    for (int j = 0; j < ids_count; j++) {
-                        multicast_list[round_n + 1][* (itr + j)] = 1;
-                    }
-                } 
-
-                if (*msg_type == 2) {
-                    // Ack
-                    struct Ack *cur_ack = (struct Ack *) recv_buf;
-                    uint32_t ack_round_n = cur_ack->round_n;
-                    multicast_list[ack_round_n][i] = 0;
-
+                cur_msg += 1;
+                uint32_t *itr = (uint32_t *) cur_msg;
+                for (int j = 0; j < ids_count; j++) {
+                    multicast_list[round_n + 1][* (itr + j)] = 1;
                 }
+            } 
+
+            if (*msg_type == 2) {
+                // Ack
+                struct Ack *cur_ack = (struct Ack *) recv_buf;
+                uint32_t ack_round_n = cur_ack->round_n;
+                multicast_list[ack_round_n][i] = 0;
+
             }
+        }
+
+        int multicast_flag = 0;
+
+        // check if all Ack received
+        for (int i = 0; i < hostlist_len; i++) {
+            if (multicast_list[round_n][i] == 1) {
+                tle_count ++;
+                multicast_flag = 1;
+                break;
+            }
+        }
+
+        if (multicast_flag == 1 && tle_count < MAX_TLE) {
+            continue;
         }
 
         round_n ++;
+        tle_count = 0;
     }
 
     int result = choice();
