@@ -268,15 +268,12 @@ int main(int argc, char *argv[]) {
                 printf("lslsl");
                 // ignore out-of-data msg
                 if (cur_msg->round_n < round_n) continue;
-                printf("%d ", cur_msg->round_n);
                 // ignore existing msg
                 int order_idx = (int) cur_msg->order;
-                printf("value_set %d", cur_msg->order, value_set[order_idx]);
-                printf("%d \n",value_set[cur_msg->order]);
-                if (value_set[(int)cur_msg->order] == 1) continue;
+                if (value_set[order_idx] == 1) continue;
 
                 printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
-                value_set[cur_msg->order] = 1;
+                value_set[order_idx] = 1;
                 multicast_order[cur_msg->round_n + 1] = cur_msg->order;
                 uint32_t msg_size = cur_msg->size - (uint32_t) BYZ_SIZE;
                 int ids_count = (int) msg_size / sizeof(uint32_t);
