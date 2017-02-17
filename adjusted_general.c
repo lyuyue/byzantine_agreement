@@ -30,7 +30,7 @@ int round_n = 0;    // current round
 int order = -1;     // order
 socklen_t serverlen = ADDR_SIZE;
 
-int value_set[2] = {0, 0};  // received value set
+int value_set[2];  // received value set
 int multicast_list[MAX_HOSTS][MAX_HOSTS];   // multicast_list[i][j]: send ByzantineMessage to host j in round i
 uint32_t multicast_order[MAX_HOSTS];    // multicast_order[i]: order to be sent in round i
 uint32_t multicast_ids[MAX_HOSTS][MAX_HOSTS];   // multicast_ids[i][j]: the j-th id to be sent in round i
@@ -270,7 +270,9 @@ int main(int argc, char *argv[]) {
                 if (cur_msg->round_n < round_n) continue;
                 printf("%d ", cur_msg->round_n);
                 // ignore existing msg
-                printf("value_set %d %d", cur_msg->order, value_set[cur_msg->order]);
+                int order_idx = (int) cur_msg->order;
+                printf("value_set %d", cur_msg->order, value_set[order_idx]);
+                printf("%d \n",value_set[cur_msg->order]);
                 if (value_set[(int)cur_msg->order] == 1) continue;
 
                 printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
