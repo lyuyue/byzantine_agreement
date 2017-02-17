@@ -200,6 +200,7 @@ int main(int argc, char *argv[]) {
             int bytes_recv = recvfrom(sockfd, (char *)recv_buf, BUF_SIZE, 0,
                     (struct sockaddr *) &hostlist_itr->data, &serverlen);
             // TODO: handle ACK
+            if (bytes_recv > 0) printf("Receive something\n");
             hostlist_itr = hostlist_itr->next;
         }
 
@@ -264,10 +265,13 @@ int main(int argc, char *argv[]) {
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
-
+                printf("lslsl");
                 // ignore out-of-data msg
                 if (cur_msg->round_n < round_n) continue;
+                printf("%d ", cur_msg->round_n);
                 // ignore existing msg
+                
+                printf("order %d\n", cur_msg->order);
                 if (value_set[cur_msg->order] == 1) continue;
 
                 printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
