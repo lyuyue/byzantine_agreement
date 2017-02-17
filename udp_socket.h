@@ -54,8 +54,6 @@ int socket_send(int sockfd, struct sockaddr_in *serveraddr, char *buf, int buf_s
 int socket_recv(int sockfd, struct sockaddr_in *serveraddr, char *recv_buf) {
     int serverlen = sizeof(struct sockaddr_in);
     int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) serveraddr, &serverlen);
-
-    if (bytes_recv < 0)
     return 0;
 }
 

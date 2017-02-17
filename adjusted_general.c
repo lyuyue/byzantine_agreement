@@ -28,7 +28,7 @@ struct sockaddr_in self_sockaddr;   // self host address info
 int sockfd = -1;    // socket file descriptor
 int round_n = 0;    // current round
 int order = -1;     // order
-int serverlen = ADDR_SIZE;
+socklen_t serverlen = ADDR_SIZE;
 
 int value_set[2] = {0, 0};  // received value set
 int multicast_list[MAX_HOSTS][MAX_HOSTS];   // multicast_list[i][j]: send ByzantineMessage to host j in round i
@@ -47,12 +47,11 @@ int stoi(char *data) {
     return result;
 }
 
-int choice(int round_n) {
-    if (value_set[round_n - 1][0] > value_set[round_n - 1][1]) {
-        return 0;
+int choice() {
+    if (value_set[1] == 1 && value_set[0] == 0) {
+        return 1;
     }
-
-    return 1;
+    return 0;
 }
 
 int get_hostlist() {
@@ -68,7 +67,7 @@ int get_hostlist() {
     }
     
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
-        struct node tmp = (struct node *) malloc(sizeof(struct node));
+        struct node *tmp = (struct node *) malloc(sizeof(struct node));
         tmp->id = hostlist_len;
         tmp->next = NULL;
 
@@ -98,9 +97,7 @@ int main(int argc, char *argv[]) {
     bzero((char *) &multicast_list[0][0], sizeof(int) * MAX_HOSTS * MAX_HOSTS);
     bzero((char *) &multicast_order[0], sizeof(uint32_t) * MAX_HOSTS);
     bzero((char *) &multicast_ids[0][0], sizeof(uint32_t) * MAX_HOSTS * MAX_HOSTS);
-    bzero((char *) &multicast_tid[0][0], sizeof(pthread_t) * MAX_HOSTS * MAX_HOSTS);
     bzero((char *) &multicast_listlen[0], sizeof(int) * MAX_HOSTS);
-    bzero((char *) &value_set[0][0], sizeof(int) * MAX_HOSTS * 2);
 
     // parse arguments
 
@@ -181,7 +178,7 @@ int main(int argc, char *argv[]) {
         msg->size = (uint32_t) (BYZ_SIZE + UINT32_SIZE);
         msg->round_n = 0;
         msg->order = (uint32_t) order;
-        uint32_t *ids = (uint32_t) ((struct ByzantineMessage *) msg + 1);
+        uint32_t *ids = (uint32_t *) ((struct ByzantineMessage *) msg + 1);
         *ids = (uint32_t) commander_id;
 
         char ack_buf[BUF_SIZE];
@@ -198,7 +195,7 @@ int main(int argc, char *argv[]) {
                     msg->round_n, msg->order, hostlist_itr->id);
             
             int bytes_recv = recvfrom(sockfd, (char *)recv_buf, BUF_SIZE, 0,
-                    (struct sockaddr *) &hostlist_itr->data, serverlen);
+                    (struct sockaddr *) &hostlist_itr->data, &serverlen);
             // TODO: handle ACK
             hostlist_itr = hostlist_itr->next;
         }
@@ -210,16 +207,16 @@ int main(int argc, char *argv[]) {
     int tle_count = 0;
 
     while (round_n < faulty + 1) {
-        struct node *hostlist_itr = head;
+        struct node *hostlist_itr = hostlist_head;
         if (round_n > 0) {
-            int msg_size = sizeof(struct ByzantineMessage) + multicast_listlen[round_n] * UINT32_SIZE);
+            int msg_size = sizeof(struct ByzantineMessage) + multicast_listlen[round_n] * UINT32_SIZE;
             struct ByzantineMessage *cur_msg = (struct ByzantineMessage *) malloc(msg_size);
             cur_msg->type = (uint32_t) 1;
             cur_msg->size = (uint32_t) msg_size;
             cur_msg->round_n = (uint32_t) round_n;
             cur_msg->order = (uint32_t) multicast_order[round_n];
 
-            uint32_t *ids_itr = cur_msg + 1;
+            uint32_t *ids_itr = (uint32_t *) ((struct ByzantineMessage*) cur_msg + 1);
             for (int i = 0; i < multicast_listlen[round_n]; i++) {
                 *(ids_itr + i) = (uint32_t) multicast_ids[round_n][i];
             }
@@ -237,7 +234,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        hostlist_itr = head;
+        hostlist_itr = hostlist_head;
         while (hostlist_itr != NULL) {
             if (round_n == 0 && hostlist_itr->id != commander_id) {
                 hostlist_itr = hostlist_itr->next;
@@ -248,8 +245,7 @@ int main(int argc, char *argv[]) {
             int cur_id = hostlist_itr->id;
 
             bzero(recv_buf, BUF_SIZE);
-            int serverlen = sizeof(struct sockaddr_in);
-            int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
+            int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, &serverlen);
             uint32_t *msg_type = (uint32_t *) recv_buf;
 
             if (*msg_type == 1) {
