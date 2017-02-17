@@ -12,6 +12,7 @@ int socket_init(char *hostname, int portno, struct sockaddr_in *serveraddr) {
     struct hostent *server;
     server = gethostbyname(hostname);
     if (! server) {
+        perror("ERROR invalid server");
         return -1;
     }
 
