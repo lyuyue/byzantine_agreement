@@ -194,6 +194,9 @@ int main(int argc, char *argv[]) {
 
             int bytes_sent = sendto(sockfd, (char *) msg, msg->size, 0,
                     (struct sockaddr *) &hostlist_itr->data, serverlen);
+            if (bytes_sent < 0) {
+                perror("ERROR send v_0");
+            }
             printf("[BYZ_SEND] Round %d, send order %d to %d \n", 
                     msg->round_n, msg->order, hostlist_itr->id);
             
