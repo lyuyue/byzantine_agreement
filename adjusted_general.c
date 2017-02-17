@@ -75,7 +75,7 @@ int get_hostlist() {
         int result = -1;
         printf("Waiting for %s\n", line_buffer);
         do {
-            int result = socket_init(line_buffer, port, &tmp->data);
+            result = socket_init(line_buffer, port, &tmp->data);
         } while (result != 0);
         printf("Success\n");
         if (self_sockaddr.sin_addr.s_addr == tmp->data.sin_addr.s_addr) {
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
     memset(&self_sockaddr, 0, sizeof(struct sockaddr_in));
     self_sockaddr.sin_family = AF_INET;
     self_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    self_sockaddr.sin_port = htons(port);
+    self_sockaddr.sin_port = htons((unsigned short) port);
 
     sockfd = socket_connect(&self_sockaddr);
     if (sockfd == -1) {
