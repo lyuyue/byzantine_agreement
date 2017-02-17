@@ -80,11 +80,12 @@ int get_hostlist() {
         printf("Success\n");
         if (self_sockaddr.sin_addr.s_addr == tmp->data.sin_addr.s_addr) {
             self_id = hostlist_len;
+            free(tmp);
+            continue;
         }
 
-        if (hostlist_len == commander_id) {
-            
-        }
+        tmp->next = hostlist_head;
+        hostlist_head = tmp;
 
         hostlist_len ++; 
     }
@@ -209,6 +210,7 @@ int main(int argc, char *argv[]) {
     int tle_count = 0;
 
     while (round_n < faulty + 1) {
+        printf("Round %d\n", round_n);
         struct node *hostlist_itr = hostlist_head;
         if (round_n > 0) {
             int msg_size = sizeof(struct ByzantineMessage) + multicast_listlen[round_n] * UINT32_SIZE;
