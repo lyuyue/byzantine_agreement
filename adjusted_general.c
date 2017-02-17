@@ -144,12 +144,13 @@ int main(int argc, char *argv[]) {
     self_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     self_sockaddr.sin_port = htons(port);
 
-    int host_count = get_hostlist();
     sockfd = socket_connect(&self_sockaddr);
     if (sockfd == -1) {
         return -1;
     }
 
+    int host_count = get_hostlist();
+    
     // receiving buffer
     char recv_buf[BUF_SIZE];
     int bytes_recv = 0;
