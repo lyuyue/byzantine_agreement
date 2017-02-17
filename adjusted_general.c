@@ -67,6 +67,7 @@ int get_hostlist() {
     }
     
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
+        *(line_buffer + strlen(line_buffer) - 1) = '\0';
         struct node *tmp = (struct node *) malloc(sizeof(struct node));
         tmp->id = hostlist_len;
         tmp->next = NULL;
