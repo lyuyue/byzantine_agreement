@@ -270,9 +270,9 @@ int main(int argc, char *argv[]) {
                 if (cur_msg->round_n < round_n) continue;
                 printf("%d ", cur_msg->round_n);
                 // ignore existing msg
-                
+
                 printf("order %d\n", cur_msg->order);
-                if (value_set[cur_msg->order] == 1) continue;
+                if (value_set[(int)cur_msg->order] == 1) continue;
 
                 printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
                 value_set[cur_msg->order] = 1;
