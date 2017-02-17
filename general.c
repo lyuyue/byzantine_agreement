@@ -1,27 +1,32 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/time.h>
+#include <string.h>
 #include "udp_socket.h"
-#include "message.h"
-#include "constant.h"
+#include "constants.h"
 
-struct sockaddr_in hostlist[MAX_HOSTS];
-int hostlist_len = 0;
-char *hostfile, *order_txt;
-int faulty = 0;
-int port = 0;
-int commander_id = LOCALHOST;
-int self_id = 0;
-struct sockaddr_in commander_sockaddr;
-struct sockaddr_in self_sockaddr;
-int sockfd = -1;
-int round_n = 0;
-int order = -1;
-int value_set[2] = {0, 0};
-int multicast_list[MAX_HOSTS][MAX_HOSTS];
+struct sockaddr_in hostlist[MAX_HOSTS]; // host address list
+int hostlist_len = 0;   // host list length
+char *hostfile; // hostfile route
+char *order_txt; // original order
+int faulty = 0; // maximum number of faulty tolerance
+int port = 0;   // port number
+int commander_id = LOCALHOST;   // commander host index in hostlist
+int self_id = 0;    // self host index in hostlist 
+struct sockaddr_in self_sockaddr;   // self host address info
+int sockfd = -1;    // socket file descriptor
+int round_n = 0;    // current round
+int order = -1;     // order
+int value_set[2] = {0, 0};  // received value set
+int multicast_list[MAX_HOSTS][MAX_HOSTS];   // multicast_list[i][j]: send ByzantineMessage to host j in round i
 pthread_t multicast_tid[MAX_HOSTS][MAX_HOSTS];
-uint32_t multicast_data[MAX_HOSTS][MAX_HOSTS];
+uint32_t multicast_data[MAX_HOSTS];
 int multicast_datalen[MAX_HOSTS];
+
+int optval; // flag value for setsockopt
 
 int stoi(char *data) {
     int result = 0;
@@ -52,17 +57,15 @@ int get_hostlist() {
     }
     
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
-        bzero(temp, sizeof(struct node));
-
-        int result = socket_init(line_buffer, port, &hostlist[list_len]);
+        int result = socket_init(line_buffer, port, &hostlist[hostlist_len]);
         
         if (result != 0) {
             perror("ERROR invalid hostname");
             continue;
         }
 
-        if (self_sockaddr.sin_addr == hostlist[list_len].sin_addr) {
-            self_id = list_len;
+        if (self_sockaddr.sin_addr.s_addr == hostlist[hostlist_len].sin_addr.s_addr) {
+            self_id = hostlist_len;
         }
 
         hostlist_len ++; 
@@ -73,11 +76,11 @@ int get_hostlist() {
 
 int main(int argc, char *argv[]) {
     // initialize
-    bzeros((char *) &hostlist[0], sizeof(struct sockaddr_in) * MAX_HOSTS);
-    bzeros((char *) &multicast_list[0][0], sizeof(int) * MAX_HOSTS * MAX_HOSTS);
-    bzeros((char *) &multicast_data[0][0], sizeof(uint32_t) * MAX_HOSTS * MAX_HOSTS);
-    bzeros((char *) &multicast_tid[0][0], sizeof(pthread_t) * MAX_HOSTS * MAX_HOSTS);
-    bzeros((char *) &multicast_datalen[0], sizeof(int) * MAX_HOSTS);
+    bzero((char *) &hostlist[0], sizeof(struct sockaddr_in) * MAX_HOSTS);
+    bzero((char *) &multicast_list[0][0], sizeof(int) * MAX_HOSTS * MAX_HOSTS);
+    bzero((char *) &multicast_data[0], sizeof(uint32_t) * MAX_HOSTS);
+    bzero((char *) &multicast_tid[0][0], sizeof(pthread_t) * MAX_HOSTS * MAX_HOSTS);
+    bzero((char *) &multicast_datalen[0], sizeof(int) * MAX_HOSTS);
 
     // parse arguments
 
@@ -140,17 +143,17 @@ int main(int argc, char *argv[]) {
     //     uint32_t round_n;     // round number
     //     uint32_t order;     // the order (retreat = 0 and attack = 1)
     //     uint32_t ids[];     // ids of the senders of this message
-    // } ByzantineMesage;
+    // } ByzantineMessage;
 
     if (commander_id == LOCALHOST) {
         printf("This is Commander.\n");
-        struct ByzantineMesage *msg = (struct ByzantineMesage *) malloc(sizeof(struct ByzantineMesage) + sizeof(uint32_t));
+        struct ByzantineMessage *msg = (struct ByzantineMessage *) malloc(sizeof(struct ByzantineMessage) + sizeof(uint32_t));
         msg->type = 1;
-        msg->size = sizeof(struct ByzantineMesage) + sizeof(uint32_t);
+        msg->size = sizeof(struct ByzantineMessage) + sizeof(uint32_t);
         msg->round_n = 0;
-        msg->order = order;
-        uint32_t *ids = (uint32_t) ((struct ByzantineMesage *) msg + 1);
-        *ids = commander_id;
+        msg->order = (uint32_t) order;
+        uint32_t *ids = (uint32_t) ((struct ByzantineMessage *) msg + 1);
+        *ids = (uint32_t) commander_id;
 
         char ack_buf[BUF_SIZE];
 
@@ -200,11 +203,11 @@ int main(int argc, char *argv[]) {
                 // ignore existing order
                 if (value_set[cur_msg->order] == 1) continue;
 
-                printf("[BYZ_RECV] Round %d, receive order %d from "); 
+                printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
                 value_set[cur_msg->order] = 1;
-                multicast_data[round_n + 1] = cur_msg->order;
+                multicast_data[cur_msg->round_n + 1] = cur_msg->order;
                 uint32_t msg_size = cur_msg->size - (uint32_t) sizeof(struct ByzantineMessage);
-                int ids_count = int (msg_size / sizeof(uint32_t));
+                int ids_count = (int) msg_size / sizeof(uint32_t);
 
                 cur_msg += 1;
                 uint32_t *itr = (uint32_t *) cur_msg;
