@@ -57,12 +57,10 @@ int get_hostlist() {
     }
     
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
-        int result = socket_init(line_buffer, port, &hostlist[hostlist_len]);
-        
-        if (result != 0) {
-            perror("ERROR invalid hostname");
-            continue;
-        }
+        int result = -1;
+        do {
+            int result = socket_init(line_buffer, port, &hostlist[hostlist_len]);
+        } while (result != 0);
 
         if (self_sockaddr.sin_addr.s_addr == hostlist[hostlist_len].sin_addr.s_addr) {
             self_id = hostlist_len;
