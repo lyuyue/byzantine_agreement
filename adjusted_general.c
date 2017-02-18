@@ -273,15 +273,14 @@ int main(int argc, char *argv[]) {
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
-                printf("lslsl");
+
                 // ignore out-of-data msg
                 if (cur_msg->round_n < round_n) continue;
                 // ignore existing msg
-                int order_idx = (int) cur_msg->order;
-                if (value_set[order_idx] == 1) continue;
+                if (value_set[cur_msg->order] == 1) continue;
 
                 printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
-                value_set[order_idx] = 1;
+                value_set[cur_msg->order] = 1;
                 multicast_order[cur_msg->round_n + 1] = cur_msg->order;
                 uint32_t msg_size = cur_msg->size - (uint32_t) BYZ_SIZE;
                 int ids_count = (int) msg_size / sizeof(uint32_t);
@@ -305,6 +304,8 @@ int main(int argc, char *argv[]) {
                 multicast_list[ack_round_n][cur_id] = DELIVERED;
                 printf("[ACK_RECV] Round %d, receive ack from %d\n", ack_round_n, hostlist_itr->id);
             }
+
+            hostlist_itr = hostlist_itr->next;
         }
 
         int multicast_flag = 0;
