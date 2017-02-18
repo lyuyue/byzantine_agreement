@@ -106,6 +106,8 @@ int main(int argc, char *argv[]) {
     bzero((char *) &multicast_ids[0][0], sizeof(uint32_t) * MAX_HOSTS * MAX_HOSTS);
     bzero((char *) &multicast_listlen[0], sizeof(int) * MAX_HOSTS);
 
+    for (int i = 0; i < MAX_HOSTS; i++) multicast_list[0][i] = DELIVERED;
+
     // parse arguments
 
     int arg_itr = 1;
@@ -238,6 +240,7 @@ int main(int argc, char *argv[]) {
         }
 
         printf("Round %d\n", round_n);
+
         struct node *hostlist_itr = hostlist_head;
         if (round_n > 0) {
             int msg_size = sizeof(struct ByzantineMessage) + multicast_listlen[round_n] * UINT32_SIZE;
@@ -310,6 +313,7 @@ int main(int argc, char *argv[]) {
                 cur_ack->round_n = round_n;
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
+                multicast_list[round_n][]
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
 
                 // ignore out-of-data msg
