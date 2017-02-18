@@ -312,7 +312,7 @@ int main(int argc, char *argv[]) {
             bzero(recv_buf, BUF_SIZE);
             int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, &serverlen);
             uint32_t *msg_type = (uint32_t *) recv_buf;
-            printf("Received something in round %d\n", round_n);
+            printf("Received something in round %d type %d\n", round_n, *msg_type);
 
             if (*msg_type == 1) {
                 // ByzantineMessage
