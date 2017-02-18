@@ -104,6 +104,8 @@ int get_hostlist() {
         hostlist_len ++; 
     }
 
+    printf("self_id %d\n", self_id);
+
     return hostlist_len;
 }
 
@@ -114,10 +116,6 @@ int main(int argc, char *argv[]) {
     bzero((char *) &multicast_order[0], sizeof(uint32_t) * MAX_HOSTS);
     bzero((char *) &multicast_ids[0][0], sizeof(uint32_t) * MAX_HOSTS * MAX_HOSTS);
     bzero((char *) &multicast_listlen[0], sizeof(int) * MAX_HOSTS);
-
-    for (int i = 0; i < MAX_HOSTS; i++) {
-        multicast_list[0][i] = DELIVERED;
-    }
 
     // parse arguments
 
@@ -238,6 +236,9 @@ int main(int argc, char *argv[]) {
 
     // Lieutenant
     int tle_count = 0;
+    for (int i = 0; i < MAX_HOSTS; i++) {
+        multicast_list[0][i] = DELIVERED;
+    }
     multicast_list[0][commander_id] = UNDELIVERED;
 
     while (round_n < faulty + 1) {
