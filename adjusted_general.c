@@ -196,6 +196,8 @@ int main(int argc, char *argv[]) {
             multicast_list[0][i] = UNDELIVERED;
         }
 
+        value_set[order] = 1;
+
         printf("This is Commander.\n");
         struct ByzantineMessage *msg = (struct ByzantineMessage *) malloc(sizeof(struct ByzantineMessage) + sizeof(uint32_t));
         msg->type = 1;
@@ -320,6 +322,8 @@ int main(int argc, char *argv[]) {
                 cur_ack->round_n = round_n;
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
+                if (round_n == 0) multicast_list[0][cur_id] = DELIVERED;
+
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
 
                 // ignore out-of-data msg
