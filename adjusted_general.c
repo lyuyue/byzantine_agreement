@@ -215,6 +215,15 @@ int main(int argc, char *argv[]) {
     int tle_count = 0;
 
     while (round_n < faulty + 1) {
+        if (round_n == 1) {
+            struct timeval tv;
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
+            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+                perror("Error setting timeout");
+                return -1;
+            }
+        }
         printf("Round %d\n", round_n);
         struct node *hostlist_itr = hostlist_head;
         if (round_n > 0) {
