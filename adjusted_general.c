@@ -243,6 +243,7 @@ int main(int argc, char *argv[]) {
     multicast_list[0][commander_id] = UNDELIVERED;
 
     while (round_n < faulty + 1) {
+        // set up socket timeout
         if (round_n == 1) {
             struct timeval tv;
             tv.tv_sec = 1;
@@ -311,6 +312,7 @@ int main(int argc, char *argv[]) {
             bzero(recv_buf, BUF_SIZE);
             int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, &serverlen);
             uint32_t *msg_type = (uint32_t *) recv_buf;
+            printf("Received something in round %d\n", round_n);
 
             if (*msg_type == 1) {
                 // ByzantineMessage
@@ -366,7 +368,7 @@ int main(int argc, char *argv[]) {
 
         // check if all Ack received
         for (int i = 0; i < hostlist_len; i++) {
-            if (multicast_list[round_n][i] == UNDELIVERED) {
+            if (multicast_list[round_n][i] == UNDELIVERED && i != self_id) {
                 tle_count ++;
                 multicast_flag = 1;
                 break;
