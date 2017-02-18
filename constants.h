@@ -3,8 +3,8 @@
 #define TIMEOUT_SEC     1
 #define MAX_HOSTS       10
 #define MAX_TLE         3
-#define UNDELIVERED     1
-#define DELIVERED       0
+#define UNDELIVERED     0
+#define DELIVERED       1
 #define BYZ_SIZE        sizeof(struct ByzantineMessage)
 #define ACK_SIZE        sizeof(struct Ack)
 #define ADDR_SIZE       sizeof(struct sockaddr_in)
