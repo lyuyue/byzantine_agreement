@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <string.h>
+#include <unistd.h>
 #include "udp_socket.h"
 #include "constants.h"
 
@@ -60,9 +61,9 @@ int choice() {
 void print_result() {
     int result = choice();
     if (result == 0) {
-        printf("%d: Agreed on retreat\n");
+        printf("%d: Agreed on retreat\n", self_id);
     } else {
-        printf("%d: Agreed on attack\n");
+        printf("%d: Agreed on attack\n", self_id);
     }
 }
 
@@ -213,7 +214,6 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
-            printf("%x %d\n", msg, msg->size);
             int bytes_sent = sendto(sockfd, (char *) msg, BYZ_SIZE + UINT32_SIZE, 0,
                     (struct sockaddr *) &hostlist_itr->data, serverlen);
             if (bytes_sent < 0) {
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
             }
 
             for (int i = 0; i < 4 + multicast_listlen[round_n]; i++) {
-                uint32_t *tmp = (uint32_t) cur_msg;
+                uint32_t *tmp = (uint32_t*) cur_msg;
                 printf("%d ", *(tmp + i));
             }
             printf("\n");

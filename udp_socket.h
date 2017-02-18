@@ -26,7 +26,7 @@ int socket_init(char *hostname, int portno, struct sockaddr_in *serveraddr) {
 }
 
 int socket_connect(struct sockaddr_in *self_sockaddr) {
-    
+
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("ERROR opening socket");
@@ -39,24 +39,6 @@ int socket_connect(struct sockaddr_in *self_sockaddr) {
     }
 
     return sockfd;
-}
-
-int socket_send(int sockfd, struct sockaddr_in *serveraddr, char *buf, int buf_size) {
-    int serverlen = sizeof(struct sockaddr_in);
-
-    int bytes_sent = sendto(sockfd, buf, buf_size, 0, serveraddr, serverlen);
-    if (bytes_sent < 0) {
-        perror("ERROR sendto");   
-        return -1;
-    }
-
-    return 0;
-}
-
-int socket_recv(int sockfd, struct sockaddr_in *serveraddr, char *recv_buf) {
-    int serverlen = sizeof(struct sockaddr_in);
-    int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) serveraddr, &serverlen);
-    return 0;
 }
 
 // int reliable_send(int sockfd, struct sockaddr_in *serveraddr, char *send_buf, int send_buf_size char *recv_buf) {
