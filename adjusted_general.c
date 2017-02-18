@@ -23,8 +23,11 @@ char *order_txt; // original order
 int faulty = 0; // maximum number of faulty tolerance
 int port = 0;   // port number
 int commander_id = LOCALHOST;   // commander host index in hostlist
+
 int self_id = 0;    // self host index in hostlist 
 struct sockaddr_in self_sockaddr;   // self host address info
+char self_hostname[BUF_SIZE];   // self hostname
+
 int sockfd = -1;    // socket file descriptor
 int round_n = 0;    // current round
 int order = -1;     // order
@@ -68,6 +71,13 @@ int get_hostlist() {
     
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
         *(line_buffer + strlen(line_buffer) - 1) = '\0';
+
+        if (strcmp(line_buffer, self_hostname) == 0) {
+            self_id = hostlist_len;
+            hostlist_len ++
+            continue;
+        }
+
         struct node *tmp = (struct node *) malloc(sizeof(struct node));
         tmp->id = hostlist_len;
         tmp->next = NULL;
@@ -78,15 +88,6 @@ int get_hostlist() {
             result = socket_init(line_buffer, port, &tmp->data);
         } while (result != 0);
         printf("Success\n");
-        printf("%u\n", self_sockaddr.sin_addr.s_addr);
-        printf("%u\n", tmp->data.sin_addr.s_addr);
-        
-        if (self_sockaddr.sin_addr.s_addr == tmp->data.sin_addr.s_addr) {
-            self_id = hostlist_len;
-            printf("self id: %d\n", self_id);
-            free(tmp);
-            continue;
-        }
 
         tmp->next = hostlist_head;
         hostlist_head = tmp;
@@ -149,6 +150,9 @@ int main(int argc, char *argv[]) {
     self_sockaddr.sin_family = AF_INET;
     self_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     self_sockaddr.sin_port = htons((unsigned short) port);
+
+    gethostname(self_hostname, BUF_SIZE);
+    printf("Hostname: %s\n", self_hostname);
 
     sockfd = socket_connect(&self_sockaddr);
     if (sockfd == -1) {
