@@ -223,6 +223,10 @@ int main(int argc, char *argv[]) {
     int tle_count = 0;
 
     while (round_n < faulty + 1) {
+        for (int i = 0; i < hostlist_len; i++) {
+            printf("%d ", multicast_list[round_n][i]);
+        }
+        printf("list \n");
         if (round_n == 1) {
             struct timeval tv;
             tv.tv_sec = 1;
@@ -232,6 +236,7 @@ int main(int argc, char *argv[]) {
                 return -1;
             }
         }
+
         printf("Round %d\n", round_n);
         struct node *hostlist_itr = hostlist_head;
         if (round_n > 0) {
