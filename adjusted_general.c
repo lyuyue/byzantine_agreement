@@ -57,6 +57,15 @@ int choice() {
     return 0;
 }
 
+void print_result() {
+    int result = choice();
+    if (result == 0) {
+        printf("%d: Agreed on retreat\n");
+    } else {
+        printf("%d: Agreed on attack\n");
+    }
+}
+
 int get_hostlist() {
     hostlist_len = 0;
 
@@ -220,6 +229,8 @@ int main(int argc, char *argv[]) {
             hostlist_itr = hostlist_itr->next;
         }
 
+        print_result();
+
         return 0; 
     }
 
@@ -227,10 +238,6 @@ int main(int argc, char *argv[]) {
     int tle_count = 0;
 
     while (round_n < faulty + 1) {
-        for (int i = 0; i < hostlist_len; i++) {
-            printf("%d ", multicast_list[round_n][i]);
-        }
-        printf("list \n");
         if (round_n == 1) {
             struct timeval tv;
             tv.tv_sec = 1;
@@ -299,9 +306,6 @@ int main(int argc, char *argv[]) {
             bzero(recv_buf, BUF_SIZE);
             int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, &serverlen);
             uint32_t *msg_type = (uint32_t *) recv_buf;
-            for (int i = 0; i < 5; i++) {
-                printf("%d ", *(msg_type + i));
-            }
 
             if (*msg_type == 1) {
                 // ByzantineMessage
@@ -372,8 +376,7 @@ int main(int argc, char *argv[]) {
         tle_count = 0;
     }
 
-    int result = choice();
-
+    print_result();
 
     return 0;
 }
