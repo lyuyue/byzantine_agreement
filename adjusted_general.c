@@ -280,6 +280,14 @@ int main(int argc, char *argv[]) {
                 continue;
             } 
 
+            if (round_n > 0 
+                && multicast_list[round_n][hostlist_itr->id] == DELIVERED) {
+                hostlist_itr = hostlist_itr->next;
+                continue;
+            }
+            
+            printf("Listening from %d\n", hostlist_itr->id);
+
             struct sockaddr_in *cur_addr = &hostlist_itr->data;
             int cur_id = hostlist_itr->id;
 
