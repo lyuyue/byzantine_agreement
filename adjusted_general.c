@@ -238,6 +238,7 @@ int main(int argc, char *argv[]) {
     int tle_count = 0;
     for (int i = 0; i < MAX_HOSTS; i++) {
         multicast_list[0][i] = DELIVERED;
+        multicast_list[i][commander_id] = DELIVERED;
     }
     multicast_list[0][commander_id] = UNDELIVERED;
 
