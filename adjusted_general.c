@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
             int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, &serverlen);
             uint32_t *msg_type = (uint32_t *) recv_buf;
             for (int i = 0; i < 5; i++) {
-                printf("%d ", *(msg_type + 1));
+                printf("%d ", *(msg_type + i));
             }
 
             if (*msg_type == 1) {
