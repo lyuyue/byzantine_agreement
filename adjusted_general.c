@@ -236,6 +236,7 @@ int main(int argc, char *argv[]) {
 
     // Lieutenant
     int tle_count = 0;
+    multicast_list[0][commander_id] = UNDELIVERED;
 
     while (round_n < faulty + 1) {
         if (round_n == 1) {
