@@ -192,6 +192,7 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
+            printf("%x %d\n", msg, msg->size);
             int bytes_sent = sendto(sockfd, (char *) msg, msg->size, 0,
                     (struct sockaddr *) &hostlist_itr->data, serverlen);
             if (bytes_sent < 0) {
