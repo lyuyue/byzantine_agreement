@@ -230,6 +230,12 @@ int main(int argc, char *argv[]) {
                 *(ids_itr + i) = (uint32_t) multicast_ids[round_n][i];
             }
 
+            for (int i = 0; i < 4 + multicast_listlen[round_n]; i++ {
+                uint32_t *tmp = (uint32_t) cur_msg;
+                printf("%d ", *(tmp + i));
+            }
+            printf("\n");
+
             while (hostlist_itr != NULL) {
                 if (multicast_list[round_n][hostlist_itr->id] == DELIVERED) {
                     hostlist_itr = hostlist_itr->next;
@@ -238,7 +244,8 @@ int main(int argc, char *argv[]) {
 
                 int result = sendto(sockfd, (char *) cur_msg, msg_size, 0,
                     (struct sockaddr *) &hostlist_itr->data, serverlen);
-
+                printf("[BYZ_SEND] Round %d, send order %d to %d \n", 
+                    cur_msg->round_n, cur_msg->order, hostlist_itr->id);
                 hostlist_itr = hostlist_itr->next;
             }
         }
