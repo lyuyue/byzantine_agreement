@@ -296,10 +296,10 @@ int main(int argc, char *argv[]) {
                 uint32_t *itr = (uint32_t *) cur_msg;
                 for (int j = 0; j < ids_count; j++) {
                     printf("%d ->", j);
-                    multicast_list[round_n + 1][* (itr + j)] = 1;
+                    multicast_list[round_n + 1][* (itr + j)] = UNDELIVERED;
                     multicast_ids[round_n + 1][j] = * (itr + j);
                 }
-                multicast_ids[round_n + 1][ids_count] = hostlist_itr->id;
+                multicast_ids[round_n + 1][ids_count] = self_id;
                 multicast_listlen[round_n + 1] = ids_count + 1;
                 printf("\n");
             } 
