@@ -246,7 +246,8 @@ int main(int argc, char *argv[]) {
             printf("\n");
 
             while (hostlist_itr != NULL) {
-                if (multicast_list[round_n][hostlist_itr->id] == DELIVERED) {
+                if (hostlist_itr->id == commander_id || 
+                    multicast_list[round_n][hostlist_itr->id] == DELIVERED) {
                     hostlist_itr = hostlist_itr->next;
                     continue;
                 }
