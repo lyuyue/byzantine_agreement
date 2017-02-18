@@ -350,7 +350,7 @@ int main(int argc, char *argv[]) {
 
         // check if all Ack received
         for (int i = 0; i < hostlist_len; i++) {
-            if (multicast_list[round_n][i] == 1) {
+            if (multicast_list[round_n][i] == UNDELIVERED) {
                 tle_count ++;
                 multicast_flag = 1;
                 break;
