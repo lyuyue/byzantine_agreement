@@ -26,9 +26,17 @@ int socket_init(char *hostname, int portno, struct sockaddr_in *serveraddr) {
 }
 
 int socket_connect(struct sockaddr_in *self_sockaddr) {
+    struct timeval tv;
+    tv.tv_sec = 1;
+
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("ERROR opening socket");
+        return -1;
+    }
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        perror("Error setting timeout");
         return -1;
     }
 
