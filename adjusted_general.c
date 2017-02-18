@@ -80,6 +80,7 @@ int get_hostlist() {
         printf("Success\n");
         if (self_sockaddr.sin_addr.s_addr == tmp->data.sin_addr.s_addr) {
             self_id = hostlist_len;
+            printf("self id: %d\n", self_id);
             free(tmp);
             continue;
         }
