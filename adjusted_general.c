@@ -107,7 +107,7 @@ int get_hostlist() {
 
     printf("self_id %d\n", self_id);
     printf("hostlist_len %d\n", hostlist_len);
-    
+
     return hostlist_len;
 }
 
@@ -330,7 +330,7 @@ int main(int argc, char *argv[]) {
                 cur_ack->round_n = round_n;
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
-                if (round_n == 0) multicast_list[0][cur_id] = DELIVERED;
+                if (cur_msg->round_n == 0) multicast_list[0][cur_id] = DELIVERED;
 
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
 
