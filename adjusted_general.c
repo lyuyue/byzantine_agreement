@@ -42,6 +42,7 @@ int multicast_listlen[MAX_HOSTS];   // multicast_listlen[i]: length of ids to be
 
 int optval = 1; // flag value for setsockopt
 
+// Convert a string into int
 int stoi(char *data) {
     int result = 0;
     for (int i = 0; i < strlen(data); i++) {
@@ -51,6 +52,7 @@ int stoi(char *data) {
     return result;
 }
 
+// Make choice based on value_set
 int choice() {
     if (value_set[1] == 1 && value_set[0] == 0) {
         return 1;
@@ -319,12 +321,15 @@ int main(int argc, char *argv[]) {
                 // ByzantineMessage
                 struct ByzantineMessage *cur_msg = (struct ByzantineMessage *) recv_buf;
 
-                for (int i = 0; i < 5; i++) {
-                    printf("data %d: %d, ", i, *(msg_type + i));
-                }
-                printf("\n");
+                if (round_n == 0 && cur_msg->round_n == 0)  multicast_list[cur_msg->round_n][cur_id] = DELIVERED;
 
-                if (round_n == 0 && cur_msg->round_n != 0) continue;
+                // ignore out-of-data msg
+                if (cur_msg->round_n != round_n) continue;
+                // ignore existing msg
+                if (value_set[cur_msg->order] == 1) continue;
+
+                printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
+                
                 // TODO: send ACK;
                 struct Ack *cur_ack = (struct Ack *) malloc(ACK_SIZE);
                 cur_ack->type = ACK_TYPE;
@@ -332,16 +337,9 @@ int main(int argc, char *argv[]) {
                 cur_ack->round_n = round_n;
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
-                multicast_list[cur_msg->round_n][cur_id] = DELIVERED;
+
 
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
-
-                // ignore out-of-data msg
-                if (cur_msg->round_n < round_n) continue;
-                // ignore existing msg
-                if (value_set[cur_msg->order] == 1) continue;
-
-                printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
                 value_set[cur_msg->order] = 1;
                 multicast_order[cur_msg->round_n + 1] = cur_msg->order;
                 uint32_t msg_size = cur_msg->size - (uint32_t) BYZ_SIZE;
