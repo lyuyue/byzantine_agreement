@@ -318,10 +318,11 @@ int main(int argc, char *argv[]) {
             if (*msg_type == 1) {
                 // ByzantineMessage
                 struct ByzantineMessage *cur_msg = (struct ByzantineMessage *) recv_buf;
-                printf("%s\n", recv_buf);
+
                 for (int i = 0; i < 5; i++) {
                     printf("data %d: %d, ", i, *(msg_type + i));
                 }
+                printf("\n");
 
                 // TODO: send ACK;
                 struct Ack *cur_ack = (struct Ack *) malloc(ACK_SIZE);
