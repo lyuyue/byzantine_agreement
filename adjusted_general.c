@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
                 *(ids_itr + i) = (uint32_t) multicast_ids[round_n][i];
             }
 
-            for (int i = 0; i < 4 + multicast_listlen[round_n]; i++ {
+            for (int i = 0; i < 4 + multicast_listlen[round_n]; i++) {
                 uint32_t *tmp = (uint32_t) cur_msg;
                 printf("%d ", *(tmp + i));
             }
