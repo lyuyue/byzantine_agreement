@@ -28,6 +28,7 @@ int socket_init(char *hostname, int portno, struct sockaddr_in *serveraddr) {
 int socket_connect(struct sockaddr_in *self_sockaddr) {
     struct timeval tv;
     tv.tv_sec = 1;
+    tv.tv_usec = 0;
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
