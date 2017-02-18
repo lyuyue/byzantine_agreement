@@ -324,6 +324,7 @@ int main(int argc, char *argv[]) {
                 }
                 printf("\n");
 
+                if (round_n == 0 && cur_msg->round_n != 0) continue;
                 // TODO: send ACK;
                 struct Ack *cur_ack = (struct Ack *) malloc(ACK_SIZE);
                 cur_ack->type = ACK_TYPE;
@@ -331,7 +332,7 @@ int main(int argc, char *argv[]) {
                 cur_ack->round_n = round_n;
 
                 int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
-                if (cur_msg->round_n == 0) multicast_list[0][cur_id] = DELIVERED;
+                multicast_list[cur_msg->round_n][cur_id] = DELIVERED;
 
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
 
