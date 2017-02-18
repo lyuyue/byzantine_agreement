@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
         msg->round_n = 0;
         msg->order = (uint32_t) order;
         uint32_t *ids = (uint32_t *) ((struct ByzantineMessage *) msg + 1);
-        *ids = (uint32_t) commander_id;
+        *ids = (uint32_t) self_id;
 
         char ack_buf[BUF_SIZE];
         struct node *hostlist_itr = hostlist_head;
