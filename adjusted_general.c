@@ -74,7 +74,7 @@ int get_hostlist() {
 
         if (strcmp(line_buffer, self_hostname) == 0) {
             self_id = hostlist_len;
-            hostlist_len ++
+            hostlist_len ++;
             continue;
         }
 
@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
                 hostlist_itr = hostlist_itr->next;
                 continue;
             }
-            
+
             printf("Listening from %d\n", hostlist_itr->id);
 
             struct sockaddr_in *cur_addr = &hostlist_itr->data;
