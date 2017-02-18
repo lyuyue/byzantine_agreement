@@ -106,7 +106,8 @@ int get_hostlist() {
     }
 
     printf("self_id %d\n", self_id);
-
+    printf("hostlist_len %d\n", hostlist_len);
+    
     return hostlist_len;
 }
 
@@ -190,8 +191,8 @@ int main(int argc, char *argv[]) {
     // } ByzantineMessage;
 
     if (commander_id == LOCALHOST) {
-        for (int i = 0; i < hostlist_len; i++) {
-            if (i == self_id) continue;
+        for (int i = 0; i < hostlist_len + 1; i++) {
+            if (i == self_id) multicast_list[0][i] = DELIVERED;
             multicast_list[0][i] = UNDELIVERED;
         }
 
