@@ -78,6 +78,9 @@ int get_hostlist() {
             result = socket_init(line_buffer, port, &tmp->data);
         } while (result != 0);
         printf("Success\n");
+        printf("%u\n", self_sockaddr.sin_addr.s_addr);
+        printf("%u\n", tmp->data.sin_addr.s_addr);
+        
         if (self_sockaddr.sin_addr.s_addr == tmp->data.sin_addr.s_addr) {
             self_id = hostlist_len;
             printf("self id: %d\n", self_id);
