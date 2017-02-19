@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
     bzero((char *) &multicast_order[0], sizeof(uint32_t) * MAX_HOSTS);
     bzero((char *) &multicast_ids[0][0], sizeof(uint32_t) * MAX_HOSTS * MAX_HOSTS);
     bzero((char *) &multicast_listlen[0], sizeof(int) * MAX_HOSTS);
+    srand(time(NULL));
 
     // parse arguments
     int arg_itr = 1;
@@ -243,6 +244,7 @@ int main(int argc, char *argv[]) {
         int resend_flag = 0; // a flag of UNDELIVERED ByzantineMessage
 
         do {
+            if (malicious_flag) msg->order = (uint32_t) rand()%2;
             struct node *hostlist_itr = hostlist_head;
             while (hostlist_itr != NULL) {
                 // bypass host where ByzantineMessage is delivered 
