@@ -35,4 +35,10 @@ Lieutenants:
 
 ###Design decisions
 - Lieutenants will be waiting for initial order from Commander before doing anything else  
+- Commander can not keep silient
+- Malicious Commander are defined as a commander who will flip the initial order
+- Malicious Lieutetant are defined as a lieutenant who will keep silent or delay sending messages  
+- Timeout upon receiving any message from any host is set to be 1 second, and is subjected to change in constant.h
+- MAX_TLE_COUNT is set to be 3, which means in a round, if all other hosts remain silent for 3 consecutive query, the host move to next round
+- ByzantineMessage is constructed with a modified ByzantineMessage header struct with a list of ids
 ###Implementation issues
