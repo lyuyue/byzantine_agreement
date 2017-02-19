@@ -41,4 +41,7 @@ Lieutenants:
 - Timeout upon receiving any message from any host is set to be 1 second, and is subjected to change in constant.h
 - MAX_TLE_COUNT is set to be 3, which means in a round, if all other hosts remain silent for 3 consecutive query, the host move to next round
 - ByzantineMessage is constructed with a modified ByzantineMessage header struct with a list of ids
+
 ###Implementation issues
+- The implementation is kind of 'tricky' since it is not strictly sychronized, a better implementation should include the logic with which the loyal lieutenants can exclude the malicious ones from system and ensure all message from loyal lieutenants are delivered.
+- In this implementation, a delay caused by network latency might leads the sender being marked as a silent host, which in some sense, this implementation is incorrect.
