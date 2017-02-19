@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
 
         int tle_count = 0;  // total count of timeouts
         int resend_flag = 0; // a flag of UNDELIVERED ByzantineMessage
-        
+
         do {
             char ack_buf[BUF_SIZE];
             struct node *hostlist_itr = hostlist_head;
@@ -349,12 +349,6 @@ int main(int argc, char *argv[]) {
                 hostlist_itr = hostlist_itr->next;
                 continue;
             } 
-
-            if (round_n > 0 
-                && multicast_list[round_n][hostlist_itr->id] == DELIVERED) {
-                hostlist_itr = hostlist_itr->next;
-                continue;
-            }
 
             printf("Listening from %d\n", hostlist_itr->id);
 
