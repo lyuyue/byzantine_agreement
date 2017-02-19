@@ -16,5 +16,6 @@ Commander:
 ![Alt][1]
 [1]: /diagrams/commander.png
 Lieutenants:
-
+![Alt][1]
+[1]: /diagrams/lieutenant.png
 
