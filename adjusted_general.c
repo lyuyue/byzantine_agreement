@@ -207,7 +207,6 @@ int main(int argc, char *argv[]) {
     
     // receiving buffer
     char recv_buf[BUF_SIZE];
-    int bytes_recv = 0;
 
     // Commander
     // Select a value v
@@ -244,7 +243,6 @@ int main(int argc, char *argv[]) {
         int resend_flag = 0; // a flag of UNDELIVERED ByzantineMessage
 
         do {
-            char ack_buf[BUF_SIZE];
             struct node *hostlist_itr = hostlist_head;
             while (hostlist_itr != NULL) {
                 // bypass host where ByzantineMessage is delivered 
@@ -335,8 +333,11 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-                int result = sendto(sockfd, (char *) cur_msg, msg_size, 0,
+                int bytes_sent = sendto(sockfd, (char *) cur_msg, msg_size, 0,
                     (struct sockaddr *) &hostlist_itr->data, serverlen);
+                if (bytes_sent < 0) {
+                    perror("ERROR send ByzantineMessage");
+                }
                 printf("[BYZ_SEND] Round %d, send order %d to %d \n", 
                     cur_msg->round_n, cur_msg->order, hostlist_itr->id);
                 hostlist_itr = hostlist_itr->next;
@@ -357,6 +358,10 @@ int main(int argc, char *argv[]) {
 
             bzero(recv_buf, BUF_SIZE);
             int bytes_recv = recvfrom(sockfd, recv_buf, BUF_SIZE, 0, (struct sockaddr *) cur_addr, &serverlen);
+            if (bytes_recv < 0) {
+                perror("ERROR receive msg");
+            }
+
             uint32_t *msg_type = (uint32_t *) recv_buf;
             printf("Received something in round %d type %d\n", round_n, *msg_type);
 
@@ -379,8 +384,10 @@ int main(int argc, char *argv[]) {
                 cur_ack->size = ACK_SIZE;
                 cur_ack->round_n = round_n;
 
-                int result = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
-
+                int bytes_sent = sendto(sockfd, (char *) cur_ack, ACK_SIZE, 0, (struct sockaddr *) cur_addr, serverlen);
+                if (bytes_sent < 0) {
+                    perror("ERROR send Ack");
+                }
 
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
                 value_set[cur_msg->order] = 1;
