@@ -82,7 +82,7 @@ void get_hostlist() {
     fp = fopen(hostfile, "r");
     if (fp < 0) {
         perror("ERROR invalid hostfile");
-        return -1;
+        return;
     }
     
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
@@ -241,6 +241,8 @@ int main(int argc, char *argv[]) {
         *ids = (uint32_t) self_id;
 
         int tle_count = 0;  // total count of timeouts
+        int resend_flag = 0; // a flag of UNDELIVERED ByzantineMessage
+        
         do {
             char ack_buf[BUF_SIZE];
             struct node *hostlist_itr = hostlist_head;
@@ -271,7 +273,7 @@ int main(int argc, char *argv[]) {
                 hostlist_itr = hostlist_itr->next;
             }
 
-            int resend_flag = 0;
+            resend_flag = 0;
             for (int i = 0; i < hostlist_len; i++) {
                 if (multicast_list[0][i] == UNDELIVERED) {
                     tle_count ++;
