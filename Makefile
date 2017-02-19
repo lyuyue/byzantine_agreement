@@ -8,7 +8,8 @@ CFLAGS = -g -Wall
 TARGET = general
 
 # source file
-SOURCE = adjusted_general
+SOURCE = general
+
 # clean
 RM = rm
 
