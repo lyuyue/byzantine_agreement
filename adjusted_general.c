@@ -9,13 +9,14 @@
 #include "udp_socket.h"
 #include "constants.h"
 
+// List node of host info
 struct node {
-    int id;
-    struct sockaddr_in data;
-    struct node *next;
+    int id; // host id
+    struct sockaddr_in data;    // address info of this host
+    struct node *next;  // pointer to next node
 };
 
-struct node *hostlist_head = NULL;
+struct node *hostlist_head = NULL;  // head of host list
 
 struct sockaddr_in hostlist[MAX_HOSTS]; // host address list
 int hostlist_len = 0;   // host list length
@@ -24,6 +25,7 @@ char *order_txt; // original order
 int faulty = 0; // maximum number of faulty tolerance
 int port = 0;   // port number
 int commander_id = LOCALHOST;   // commander host index in hostlist
+int malicious_flag = 0; // if this flag is set to 1, this host is malicious
 
 int self_id = 0;    // self host index in hostlist 
 struct sockaddr_in self_sockaddr;   // self host address info
@@ -32,7 +34,7 @@ char self_hostname[BUF_SIZE];   // self hostname
 int sockfd = -1;    // socket file descriptor
 int round_n = 0;    // current round
 int order = -1;     // order
-socklen_t serverlen = ADDR_SIZE;
+socklen_t serverlen = ADDR_SIZE;    //  Size of struct sockaddr_in
 
 int value_set[2];  // received value set
 int multicast_list[MAX_HOSTS][MAX_HOSTS];   // multicast_list[i][j]: send ByzantineMessage to host j in round i
@@ -60,6 +62,7 @@ int choice() {
     return 0;
 }
 
+// print the result based on choice() function
 void print_result() {
     int result = choice();
     if (result == 0) {
@@ -69,7 +72,8 @@ void print_result() {
     }
 }
 
-int get_hostlist() {
+// fetch list of host from hostfile and build sockaddr_in
+void get_hostlist() {
     hostlist_len = 0;
 
     char *line_buffer = (char *) malloc(sizeof(char) * BUF_SIZE);
@@ -84,12 +88,14 @@ int get_hostlist() {
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
         *(line_buffer + strlen(line_buffer) - 1) = '\0';
 
+        // ignore localhost
         if (strcmp(line_buffer, self_hostname) == 0) {
             self_id = hostlist_len;
             hostlist_len ++;
             continue;
         }
 
+        // allocate space for new node
         struct node *tmp = (struct node *) malloc(sizeof(struct node));
         tmp->id = hostlist_len;
         tmp->next = NULL;
@@ -101,16 +107,27 @@ int get_hostlist() {
         } while (result != 0);
         printf("Success\n");
 
+        // insert new node into head of list
         tmp->next = hostlist_head;
         hostlist_head = tmp;
 
         hostlist_len ++; 
     }
 
-    printf("self_id %d\n", self_id);
-    printf("hostlist_len %d\n", hostlist_len);
+    printf("Self-id: %d\n", self_id);
+    printf("Length of host list: %d\n", hostlist_len);
 
-    return hostlist_len;
+    return;
+}
+
+void set_timeout() {
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        perror("Error setting timeout");
+    }
+    return;
 }
 
 int main(int argc, char *argv[]) {
@@ -122,7 +139,6 @@ int main(int argc, char *argv[]) {
     bzero((char *) &multicast_listlen[0], sizeof(int) * MAX_HOSTS);
 
     // parse arguments
-
     int arg_itr = 1;
     for (; arg_itr < argc; arg_itr ++) {
         if (strcmp(argv[arg_itr], "-p") == 0) {
@@ -159,8 +175,20 @@ int main(int argc, char *argv[]) {
             }
             continue;
         }
+
+        if (strcmp(argv[arg_itr], "-m") == 0) {
+            arg_itr ++;
+            malicious_flag = 1;
+            continue;
+        }
     }
 
+    // if malicious, keep silent
+    if (malicious_flag == 1) {
+        return 0;
+    }
+
+    // build localhost sockaddr_in
     memset(&self_sockaddr, 0, sizeof(struct sockaddr_in));
     self_sockaddr.sin_family = AF_INET;
     self_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -169,12 +197,13 @@ int main(int argc, char *argv[]) {
     gethostname(self_hostname, BUF_SIZE);
     printf("Hostname: %s\n", self_hostname);
 
+    // build a socket and bind it to localhost
     sockfd = socket_connect(&self_sockaddr);
     if (sockfd == -1) {
         return -1;
     }
 
-    int host_count = get_hostlist();
+    get_hostlist();
     
     // receiving buffer
     char recv_buf[BUF_SIZE];
@@ -193,12 +222,14 @@ int main(int argc, char *argv[]) {
     // } ByzantineMessage;
 
     if (commander_id == LOCALHOST) {
+        // mark every one in the network as UNDELIVERED
         for (int i = 0; i < hostlist_len + 1; i++) {
             if (i == self_id) multicast_list[0][i] = DELIVERED;
             multicast_list[0][i] = UNDELIVERED;
         }
 
         value_set[order] = 1;
+        set_timeout();
 
         printf("This is Commander.\n");
         struct ByzantineMessage *msg = (struct ByzantineMessage *) malloc(sizeof(struct ByzantineMessage) + sizeof(uint32_t));
@@ -209,28 +240,52 @@ int main(int argc, char *argv[]) {
         uint32_t *ids = (uint32_t *) ((struct ByzantineMessage *) msg + 1);
         *ids = (uint32_t) self_id;
 
-        char ack_buf[BUF_SIZE];
-        struct node *hostlist_itr = hostlist_head;
-        while (hostlist_itr != NULL) {
-            if (multicast_list[0][hostlist_itr->id] == DELIVERED) {
+        int tle_count = 0;  // total count of timeouts
+        do {
+            char ack_buf[BUF_SIZE];
+            struct node *hostlist_itr = hostlist_head;
+            while (hostlist_itr != NULL) {
+                // bypass host where ByzantineMessage is delivered 
+                if (multicast_list[0][hostlist_itr->id] == DELIVERED) {
+                    hostlist_itr = hostlist_itr->next;
+                    continue;
+                }
+
+                int bytes_sent = sendto(sockfd, (char *) msg, BYZ_SIZE + UINT32_SIZE, 0,
+                        (struct sockaddr *) &hostlist_itr->data, serverlen);
+                if (bytes_sent < 0) {
+                    perror("ERROR send v_0");
+                }
+                printf("[BYZ_SEND] Round %d, send order %d to %d \n", 
+                        msg->round_n, msg->order, hostlist_itr->id);
+                
+                int bytes_recv = recvfrom(sockfd, (char *)recv_buf, BUF_SIZE, 0,
+                        (struct sockaddr *) &hostlist_itr->data, &serverlen);
+
+                // Received Ack, reset timeout count
+                if (bytes_recv > 0) {
+                    printf("Received Ack\n");
+                    tle_count = 0;
+                }
+
                 hostlist_itr = hostlist_itr->next;
-                continue;
             }
 
-            int bytes_sent = sendto(sockfd, (char *) msg, BYZ_SIZE + UINT32_SIZE, 0,
-                    (struct sockaddr *) &hostlist_itr->data, serverlen);
-            if (bytes_sent < 0) {
-                perror("ERROR send v_0");
+            int resend_flag = 0;
+            for (int i = 0; i < hostlist_len; i++) {
+                if (multicast_list[0][i] == UNDELIVERED) {
+                    tle_count ++;
+                    resend_flag = 1;
+                    break;
+                }
             }
-            printf("[BYZ_SEND] Round %d, send order %d to %d \n", 
-                    msg->round_n, msg->order, hostlist_itr->id);
-            
-            int bytes_recv = recvfrom(sockfd, (char *)recv_buf, BUF_SIZE, 0,
-                    (struct sockaddr *) &hostlist_itr->data, &serverlen);
-            // TODO: handle ACK
-            if (bytes_recv > 0) printf("Receive something\n");
-            hostlist_itr = hostlist_itr->next;
-        }
+
+            if (tle_count < MAX_TLE && resend_flag == 1) continue;
+
+            // MAX_TLE count reached or all ByzantineMessage delivered
+            break;
+
+        } while (resend_flag == 0);
 
         print_result();
 
@@ -247,15 +302,7 @@ int main(int argc, char *argv[]) {
 
     while (round_n < faulty + 1) {
         // set up socket timeout
-        if (round_n == 1) {
-            struct timeval tv;
-            tv.tv_sec = 1;
-            tv.tv_usec = 0;
-            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-                perror("Error setting timeout");
-                return -1;
-            }
-        }
+        if (round_n == 1) set_timeout();
 
         printf("Round %d\n", round_n);
 
@@ -361,8 +408,11 @@ int main(int argc, char *argv[]) {
                 // Ack
                 struct Ack *cur_ack = (struct Ack *) recv_buf;
                 uint32_t ack_round_n = cur_ack->round_n;
+                // mark the message sent to cur_id is DELIVERED
                 multicast_list[ack_round_n][cur_id] = DELIVERED;
                 printf("[ACK_RECV] Round %d, receive ack from %d\n", ack_round_n, hostlist_itr->id);
+                // reset timeout count
+                tle_count = 0;
             }
 
             hostlist_itr = hostlist_itr->next;
