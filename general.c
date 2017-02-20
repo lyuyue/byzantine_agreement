@@ -240,9 +240,9 @@ int main(int argc, char *argv[]) {
         int resend_flag = 0; // a flag of UNDELIVERED ByzantineMessage
 
         do {
-            if (malicious_flag) msg->order = (uint32_t) rand()%2;
             struct node *hostlist_itr = hostlist_head;
             while (hostlist_itr != NULL) {
+                if (malicious_flag) msg->order = (uint32_t) rand()%2;
                 // bypass host where ByzantineMessage is delivered 
                 if (multicast_list[0][hostlist_itr->id] == DELIVERED) {
                     hostlist_itr = hostlist_itr->next;
