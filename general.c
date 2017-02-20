@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <unistd.h>
 #include "udp_socket.h"
@@ -184,11 +185,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // if malicious, keep silent
-    if (malicious_flag == 1) {
-        return 0;
-    }
-
     // build localhost sockaddr_in
     memset(&self_sockaddr, 0, sizeof(struct sockaddr_in));
     self_sockaddr.sin_family = AF_INET;
@@ -295,6 +291,11 @@ int main(int argc, char *argv[]) {
     }
 
     // Lieutenant
+    // if malicious, keep silent
+    if (malicious_flag == 1) {
+        return 0;
+    }
+
     int tle_count = 0;
     for (int i = 0; i < MAX_HOSTS; i++) {
         multicast_list[0][i] = DELIVERED;
