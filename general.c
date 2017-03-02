@@ -264,6 +264,7 @@ int main(int argc, char *argv[]) {
                 if (bytes_recv > 0) {
                     printf("Received Ack\n");
                     tle_count = 0;
+                    multicast_list[0][hostlist_itr->id] = DELIVERED;
                 }
 
                 hostlist_itr = hostlist_itr->next;
@@ -353,6 +354,11 @@ int main(int argc, char *argv[]) {
                 hostlist_itr = hostlist_itr->next;
                 continue;
             } 
+
+            if (round_n > 0 && hostlist_itr->id == commander_id) {
+                hostlist_itr = hostlist_itr->next;
+                continue;
+            }
 
             printf("Listening from %d\n", hostlist_itr->id);
 
