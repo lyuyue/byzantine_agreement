@@ -374,7 +374,7 @@ int main(int argc, char *argv[]) {
 
                 if (round_n == 0 && cur_msg->round_n == 0)  multicast_list[cur_msg->round_n][cur_id] = DELIVERED;
 
-                printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
+                printf("[BYZ_RECV] Round %d, receive order %d from %d\n", cur_msg->round_n, cur_msg->order, hostlist_itr->id); 
                 
                 // TODO: send ACK;
                 struct Ack *cur_ack = (struct Ack *) malloc(ACK_SIZE);
@@ -402,13 +402,11 @@ int main(int argc, char *argv[]) {
                 cur_msg += 1;
                 uint32_t *itr = (uint32_t *) cur_msg;
                 for (int j = 0; j < ids_count; j++) {
-                    printf("%d ->", j);
                     multicast_list[round_n + 1][* (itr + j)] = DELIVERED;
                     multicast_ids[round_n + 1][j] = * (itr + j);
                 }
                 multicast_ids[round_n + 1][ids_count] = self_id;
                 multicast_listlen[round_n + 1] = ids_count + 1;
-                printf("\n");
             } 
 
             if (*msg_type == 2) {
