@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
         struct ByzantineMessage *msg = (struct ByzantineMessage *) malloc(sizeof(struct ByzantineMessage) + sizeof(uint32_t));
         msg->type = 1;
         msg->size = (uint32_t) (BYZ_SIZE + UINT32_SIZE);
-        msg->round_n = 0;
+        msg->round_n = (uint32_t) 0;
         msg->order = (uint32_t) order;
         uint32_t *ids = (uint32_t *) ((struct ByzantineMessage *) msg + 1);
         *ids = (uint32_t) self_id;
@@ -430,6 +430,12 @@ int main(int argc, char *argv[]) {
         }
 
         int multicast_flag = 0;
+
+        if (round_n == 0 && multicast_list[0][commander_id] == DELIVERED) {
+            round_n ++;
+            tle_count = 0;
+            continue;
+        }
 
         // check if all Ack received
         for (int i = 0; i < hostlist_len; i++) {
