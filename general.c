@@ -374,11 +374,6 @@ int main(int argc, char *argv[]) {
 
                 if (round_n == 0 && cur_msg->round_n == 0)  multicast_list[cur_msg->round_n][cur_id] = DELIVERED;
 
-                // ignore out-of-data msg
-                if (cur_msg->round_n != round_n) continue;
-                // ignore existing msg
-                if (value_set[cur_msg->order] == 1) continue;
-
                 printf("[BYZ_RECV] Round %d, receive order %d from ", cur_msg->round_n, cur_msg->order); 
                 
                 // TODO: send ACK;
@@ -393,6 +388,12 @@ int main(int argc, char *argv[]) {
                 }
 
                 printf("[ACK_SEND] Round %d, send ACK to %d\n", cur_msg->round_n, cur_id);
+
+                // ignore out-of-data msg
+                if (cur_msg->round_n != round_n) continue;
+                // ignore existing msg
+                if (value_set[cur_msg->order] == 1) continue;
+
                 value_set[cur_msg->order] = 1;
                 multicast_order[cur_msg->round_n + 1] = cur_msg->order;
                 uint32_t msg_size = cur_msg->size - (uint32_t) BYZ_SIZE;
